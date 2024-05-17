@@ -17,9 +17,11 @@ public class User {
     @Getter
     @Setter
     private String name;
+    @Setter
     private String email;
     private String password;
     @Getter
+    @Setter
     private String authToken;
 
 }

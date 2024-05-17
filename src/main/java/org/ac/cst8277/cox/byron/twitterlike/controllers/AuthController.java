@@ -5,6 +5,9 @@ import org.ac.cst8277.cox.byron.twitterlike.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,4 +31,14 @@ public class AuthController {
             return authService.authorizeUser(name, password); // placeholder
         }
     }
+    @GetMapping("/")
+    public ResponseEntity<User> authorize(@AuthenticationPrincipal OAuth2User principal) {
+        // placeholder return details from GitHub
+        if(principal != null) {
+            return authService.getGitHubToken(principal);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
 }
+

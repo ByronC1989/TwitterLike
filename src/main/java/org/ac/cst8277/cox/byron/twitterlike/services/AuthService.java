@@ -2,11 +2,18 @@ package org.ac.cst8277.cox.byron.twitterlike.services;
 
 import org.ac.cst8277.cox.byron.twitterlike.repo.AuthRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.neo4j.Neo4jProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.ac.cst8277.cox.byron.twitterlike.beans.User;
 
+import java.security.Principal;
 import java.util.UUID;
 
 @Service
@@ -55,6 +62,28 @@ public class AuthService {
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
             // return error if user not added to database.
+        }
+    }
+
+    public ResponseEntity<User> getGitHubToken(OAuth2User principle){
+        try {
+            String name = null;
+            String email = null;
+
+            name = principle.getAttribute("login");
+            email = principle.getAttribute("email");
+
+            generateAuthToken(); // generate UUID for github user
+            User userGitHub = new User();
+            userGitHub.setName(name);
+            userGitHub.setEmail(email);
+            userGitHub.setAuthToken(String.valueOf(authToken));
+
+            authRepo.save(userGitHub);
+
+            return new ResponseEntity<>(userGitHub, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
