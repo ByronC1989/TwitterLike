@@ -3,6 +3,8 @@ package org.ac.cst8277.cox.byron.twitterlike.beans;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,5 +25,8 @@ public class User {
     @Getter
     @Setter
     private String authToken;
+    @Setter
+    @Getter
+    private LocalDateTime expiration;
 
 }

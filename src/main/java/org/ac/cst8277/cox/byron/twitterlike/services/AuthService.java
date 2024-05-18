@@ -2,18 +2,13 @@ package org.ac.cst8277.cox.byron.twitterlike.services;
 
 import org.ac.cst8277.cox.byron.twitterlike.repo.AuthRepo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.neo4j.Neo4jProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.ac.cst8277.cox.byron.twitterlike.beans.User;
 
-import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -67,19 +62,32 @@ public class AuthService {
 
     public ResponseEntity<User> getGitHubToken(OAuth2User principle){
         try {
-            String name = null;
-            String email = null;
+            String name;
+            String email;
 
             name = principle.getAttribute("login");
             email = principle.getAttribute("email");
 
             generateAuthToken(); // generate UUID for github user
             User userGitHub = new User();
-            userGitHub.setName(name);
-            userGitHub.setEmail(email);
-            userGitHub.setAuthToken(String.valueOf(authToken));
 
-            authRepo.save(userGitHub);
+            if(authRepo.gitUser(name) != null) {
+                // update user if they already exist with a new code
+                userGitHub = authRepo.gitUser(name);
+                // set an expiry of 15 minutes on token being valid.
+                userGitHub.setExpiration(LocalDateTime.now().plusMinutes(15));
+                userGitHub.setAuthToken(String.valueOf(authToken));
+                authRepo.save(userGitHub);
+                System.out.println("Updated User...");
+            } else {
+                // save user if it's there first time logging in
+                userGitHub.setName(name);
+                userGitHub.setEmail(email);
+                userGitHub.setAuthToken(String.valueOf(authToken));
+                userGitHub.setExpiration(LocalDateTime.now().plusMinutes(15));
+                authRepo.save(userGitHub);
+                System.out.println("Saved New User...");
+            }
 
             return new ResponseEntity<>(userGitHub, HttpStatus.OK);
         } catch (Exception e) {
@@ -89,7 +97,15 @@ public class AuthService {
 
     // determine if token is valid
     public boolean isAuthenticated(String token) {
-        return authRepo.checkToken(token) != null;
+        User validUser;
+        LocalDateTime current = LocalDateTime.now();
+
+        if(authRepo.checkToken(token) != null) {
+            validUser = authRepo.checkToken(token);
+            // if the current time is after the expiration time the token is expired.
+            return validUser.getExpiration().isAfter(current);
+        }
+        return false;
     }
 
 }

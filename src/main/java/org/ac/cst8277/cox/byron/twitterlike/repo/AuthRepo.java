@@ -13,4 +13,7 @@ public interface AuthRepo extends JpaRepository<User, Integer> {
     // update user to have a token
     @Query(value = "SELECT user.* FROM user where AuthToken = ?1" , nativeQuery = true)
     User checkToken(String authToken);
+
+    @Query(value = "SELECT user.* FROM user where name = ?1" , nativeQuery = true)
+    User gitUser(String name);
 }
